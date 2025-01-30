@@ -8,6 +8,11 @@
 
 <!--MAIN-DATA-BEGIN-->
 
+This is a modified version of GRAPHGEN to generate Rust instead of C++. It only really works for one
+specific algorithm right now, since there's lots of leftover C++ stuff and changes to the algorithm
+implementation are needed, but does generate valid decision forests that can be executed using
+`include!()`.
+
 <p align="justify">Please include the following reference when citing GRAPHGEN:</p>
 
 - <p align="justify"> Bolelli, Federico; Allegretti, Stefano; Grana, Costantino "One DAG to Rule Them All" IEEE Transactions on Pattern Analysis and Machine Intelligence, 2021. <a title="BibTex" href="https://federicobolelli.it/pub_files/2021tpami.html">BibTex</a>. <a title="Download" href="https://federicobolelli.it/pub_files/2021tpami.pdf">PDF</a>.</p>
@@ -18,13 +23,12 @@ GRAPHGEN is an open-source framework for optimizing algorithms that can be model
 
 In short, GRAPHGEN is able to:
 
-
-* <p align="justify"> Generate the Optimal Decision Tree (ODTree) associated to a given problem <a href="#HYPERCUBE">[1]</a>;</p>
-* <p align="justify"> Compress the ODTree into a Directed Rooted Acyclic Graph (DRAG), in order to better fit instruction cache <a href="#DRAG">[2]</a>;</p>
-* <p align="justify"> Apply pixel (or state) prediction <a href="#EFM">[3]</a>, <a href="#CTB">[4]</a> thus generating a Forest of Decision Trees (FDTrees) from the original ODTtree. Prediction allows to recycle information obtained in the previous step, thus saving memory accesses and reducing total execution time <a href="#PRED">[5]</a>;</p>
-* <p align="justify"> Remove boundary checks by generating special Decision Trees (DTtrees) for the start/end of the line and special FDTrees for the first/last line <a href="#Spaghetti">[6]</a>;</p>
-* <p align="justify"> Compress the FDT into a multi-rooted acyclic graph in order to better fit instruction cache;</p>
-* <p align="justify"> Introduce pattern frequencies in the generation of ODTs to better fit real data and improve the performance of algorithms over a particular use-case scenario.</p>
+- <p align="justify"> Generate the Optimal Decision Tree (ODTree) associated to a given problem <a href="#HYPERCUBE">[1]</a>;</p>
+- <p align="justify"> Compress the ODTree into a Directed Rooted Acyclic Graph (DRAG), in order to better fit instruction cache <a href="#DRAG">[2]</a>;</p>
+- <p align="justify"> Apply pixel (or state) prediction <a href="#EFM">[3]</a>, <a href="#CTB">[4]</a> thus generating a Forest of Decision Trees (FDTrees) from the original ODTtree. Prediction allows to recycle information obtained in the previous step, thus saving memory accesses and reducing total execution time <a href="#PRED">[5]</a>;</p>
+- <p align="justify"> Remove boundary checks by generating special Decision Trees (DTtrees) for the start/end of the line and special FDTrees for the first/last line <a href="#Spaghetti">[6]</a>;</p>
+- <p align="justify"> Compress the FDT into a multi-rooted acyclic graph in order to better fit instruction cache;</p>
+- <p align="justify"> Introduce pattern frequencies in the generation of ODTs to better fit real data and improve the performance of algorithms over a particular use-case scenario.</p>
 
 <p align="justify">
 As mentioned, the generation process is only related to the definition of the problem, meaning that the same problem can be solved using different definitions such as exploiting different scanning masks <a href="#CTB">[4]</a>, <a href="#SAUF">[7]</a>, <a href="#BBDT">[8]</a>, <a href="#CCIT">[9]</a>.</p>
@@ -36,38 +40,42 @@ For all the aforementioned optimization strategies GRAPHGEN is able to generate 
 <b><i>Tested Platforms</i>: Windows (VS2017), Linux (GCC 9.x or later).</b>
 
 ## How to Run GRAPHGEN
-### Requirements (Windows)
-* For compiling: Visual Studio 2017 or later;
-* [CMake](https://cmake.org/) 3.12 or later;
-* OpenCV 3.x (optional, only needed for frequency calculation);
-* graphviz (included in the repository as executable);
-* yaml-cpp (included in the repository as submodule).
 
+### Requirements (Windows)
+
+* For compiling: Visual Studio 2017 or later;
+- [CMake](https://cmake.org/) 3.12 or later;
+- OpenCV 3.x (optional, only needed for frequency calculation);
+- graphviz (included in the repository as executable);
+- yaml-cpp (included in the repository as submodule).
 
 ### Requirements (Linux)
+
 * For compiling: GCC 9.x or later (for full std::filesystem support);
-* [CMake](https://cmake.org/) 3.12 or later;
-* [graphviz](https://www.graphviz.org/download/) for producing SVG representations of the generated graphs, using the `dot` command;
-* OpenCV 3.x (optional, only needed for frequency calculation);
-* yaml-cpp (included in the repository as submodule).
+- [CMake](https://cmake.org/) 3.12 or later;
+- [graphviz](https://www.graphviz.org/download/) for producing SVG representations of the generated graphs, using the `dot` command;
+- OpenCV 3.x (optional, only needed for frequency calculation);
+- yaml-cpp (included in the repository as submodule).
 
 ### Setup
+
 * Install the requirements as described above;
-* Open CMake and point it to the root directory of this repository. The build folder can be e.g. a subfolder called `bin` or `build`.
-* Select "Configure";
-* Important variables to set:
-    * `GRAPHGEN_FREQUENCIES_ENABLED`: enables frequency calculation and corresponding build targets (e.g. `Spaghetti_FREQ`). If enabled:
+- Open CMake and point it to the root directory of this repository. The build folder can be e.g. a subfolder called `bin` or `build`.
+- Select "Configure";
+- Important variables to set:
+  - `GRAPHGEN_FREQUENCIES_ENABLED`: enables frequency calculation and corresponding build targets (e.g. `Spaghetti_FREQ`). If enabled:
     `OpenCV_DIR` points to the build folder of an OpenCV 3.x installation with identical architecture and compiler, and `GRAPHGEN_FREQUENCIES_DATASET_DOWNLOAD` must be enabled if you wish to download the datasets used in frequency calculation (archive size: ca. 2-3 GB). This flag is mandatory for frequency calculation if you have not downloaded the dataset before.
-    * **On Linux**: if you wish to change the architecture to 64-bit (default is 32-bit), change occurences of `-m32` to `-m64` in `CMAKE_CXX_FLAGS` and `CMAKE_C_FLAGS`;
-    * **On Linux**: you can adjust the build type by setting `CMAKE_BUILD_TYPE` (`Release` preferred for faster decision tree and forest calculation).
-* Select "Generate" to generate the project.
-* Build and execute the project: 
-    * **On Windows**: open the generated project solution, select the desired start-up target, build and execute either in Debug or Release mode.
-    * **On Linux**: `cd` into the build folder, run `make` command and then execute one of the built targets (e.g. `./SAUF`).
-* The outputs (generated code and graphs) of the executables will be stored inside the build folder in a subfolder called `outputs` (e.g. `GRAPHGEN/build/outputs/SAUF/SAUF_tree.svg`).
+  - **On Linux**: if you wish to change the architecture to 64-bit (default is 32-bit), change occurences of `-m32` to `-m64` in `CMAKE_CXX_FLAGS` and `CMAKE_C_FLAGS`;
+  - **On Linux**: you can adjust the build type by setting `CMAKE_BUILD_TYPE` (`Release` preferred for faster decision tree and forest calculation).
+- Select "Generate" to generate the project.
+- Build and execute the project:
+  - **On Windows**: open the generated project solution, select the desired start-up target, build and execute either in Debug or Release mode.
+  - **On Linux**: `cd` into the build folder, run `make` command and then execute one of the built targets (e.g. `./SAUF`).
+- The outputs (generated code and graphs) of the executables will be stored inside the build folder in a subfolder called `outputs` (e.g. `GRAPHGEN/build/outputs/SAUF/SAUF_tree.svg`).
 
 ## Configuring GRAPHGEN
-Some application behaviors can be configured by changing the `config.yaml` in the build folder. 
+
+Some application behaviors can be configured by changing the `config.yaml` in the build folder.
 
 - `force_odt_generation` - boolean value that forces the optimal decision tree to be (re)generated with every execution. This may be necessary for debug purposes:
 
@@ -75,33 +83,35 @@ Some application behaviors can be configured by changing the `config.yaml` in th
 force_odt_generation: false
 ```
 
-- `datasets` - list of datasets to be used for frequency calculation. All the [YACCLAB](https://github.com/prittt/YACCLAB) datasets are available if the  `GRAPHGEN_FREQUENCIES_DATASET_DOWNLOAD` flag was set during the configuration: 
+- `datasets` - list of datasets to be used for frequency calculation. All the [YACCLAB](https://github.com/prittt/YACCLAB) datasets are available if the  `GRAPHGEN_FREQUENCIES_DATASET_DOWNLOAD` flag was set during the configuration:
 
 ``` yaml
 datasets: ["fingerprints", "hamlet", "3dpes", "xdocs", "tobacco800", "mirflickr", "medical", "classical"]
 ```
 
-- `paths` - dictionary with both input (folder containing the datasets used for frequency calculation) and output (where output code, graphs, and frequenices will be stored) paths. It is automatically initialized by CMake: 
+- `paths` - dictionary with both input (folder containing the datasets used for frequency calculation) and output (where output code, graphs, and frequenices will be stored) paths. It is automatically initialized by CMake:
 
 ``` yaml
 paths: {input: "<datasets_path>", output: "<output_results_path>"}
 ```
 
-- `dot` - dictionary to configure dot output format. Three different configuration parameters are available: 
-    * `out_format` - output format of the generated graphs. Currently supported formats are `"pdf"`, `"png"`, and `"svg"`;
-    * `background` - background color of the generated graphs. It can be one of the colors supported by dot, such as `"white"`, `"red"`, `"turquoise"`, `"sienna"`, `"transparent"`, etc;
-    * `ranksep` - vertical separation for objects belonging to two consecutive lines of the output graph.
+- `dot` - dictionary to configure dot output format. Three different configuration parameters are available:
+  - `out_format` - output format of the generated graphs. Currently supported formats are `"pdf"`, `"png"`, and `"svg"`;
+  - `background` - background color of the generated graphs. It can be one of the colors supported by dot, such as `"white"`, `"red"`, `"turquoise"`, `"sienna"`, `"transparent"`, etc;
+  - `ranksep` - vertical separation for objects belonging to two consecutive lines of the output graph.
 
 ``` yaml
 dot: {out_format: "svg", background: "transparent", ranksep: "0.5"}
 ```
 
 ## Code Structure
+
 <p align="justify">
 The source code contains the library itself and dozens of example targets specific for different algorithms, already available in literature or newly generated with GRAPHGEN (the latter are identified with a *). A complete description follows.
 </p>
 
 ### Connected Components Labeling (Labeling)
+
 - `SAUF` reproduces the Scan Array-based Union Find algorithm generating the optimal decision tree for the Rosenfeld scanning mask <a href="#SAUF">[7]</a>;
 - `PRED` reproduces the algorithm proposed in <a href="#PRED">[5]</a>, generating the optimal decision tree for the Rosenfeld scanning mask and then applying prediction;
 - `PRED++*` applies the code compression strategy to the forest of PRED;
@@ -118,6 +128,7 @@ The source code contains the library itself and dozens of example targets specif
 - `PRED++3D*` generates the optimal decision tree for the 3D Rosenfeld scanning mask and applies prediction and compression.
 
 ### Image Skeletonization (Thinning)
+
 - `ZS_TREE` reproduces the algorithm presented in <a href="#BBDT_FREQ">[10]</a> generating the optimal decision tree for the Zhang and Suen <a href="#ZS">[11]</a> approach;
 - `ZS_Spaghetti*` generates the optimal decision tree for the Zhang and Suen <a href="#ZS">[11]</a> approach applying both prediction and compression;
 - `ZS_Spaghetti_FREQ*` the same as `ZS_Spaghetti` but considering pattern frequency;
@@ -129,6 +140,7 @@ The source code contains the library itself and dozens of example targets specif
 - `CH_Spaghetti_FREQ*` the same as `CH_Spaghetti` but considering pattern frequency.
 
 ### Chain Code
+
 - `Cederberg_TREE*` generates the optimal decision tree for the Cederberg <a href="#Cederberg">[14]</a> algorithm;
 - `Cederberg_Spaghetti*` generates the optimal decision tree for the Cederberg <a href="#Cederberg">[14]</a> algorithm, applying also prediction and compression;
 - `Cederberg_Spaghetti_FREQ*` the same as `Cederberg_Spaghetti` but considering pattern frequency.
