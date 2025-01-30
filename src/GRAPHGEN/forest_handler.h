@@ -174,10 +174,13 @@ public:
       os << "let mut label = entry;\n";
       os << "while let Some(next) = (|label| -> Option<" << labels
          << "> { match label {\n";
+
       if (i.first != ForestHandlerFlags::CENTER_LINES) {
+
         last_id = GenerateLineForestCode(
             os, i.second, prefixs[i.first] + "_", last_id, conditions, actions,
             before_main, after_main, before_end, after_end_no_loop);
+
         os << prefixs[i.first] + "_" << " => {},\n";
       } else {
         last_id = GenerateLineForestCode(
@@ -188,7 +191,7 @@ public:
       os << "label = next;\n}\n";
       os << "}\n";
 
-      os_label << "#[allow(non_snake_case, non_camel_case_types)]\n";
+      os_label << "#[allow(non_snake_case, non_camel_case_types, unused)]\n";
       os_label << "pub enum " << labels << " {\n";
       for (int i = current_id + 1; i <= last_id; i++) {
         os_label << tab << "NODE_" << i << ",\n";

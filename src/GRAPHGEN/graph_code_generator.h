@@ -19,6 +19,7 @@
                         size_t end_group_id)
 
 BEFORE_AFTER_FUNC(DefaultEmptyFunc);
+BEFORE_AFTER_FUNC(BeforeMainNoEndTree);
 BEFORE_AFTER_FUNC(BeforeMainShiftOne);
 BEFORE_AFTER_FUNC(BeforeMainShiftTwo);
 BEFORE_AFTER_FUNC(BeforeEnd);

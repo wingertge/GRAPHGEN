@@ -26,10 +26,23 @@ BEFORE_AFTER_FUNC(DefaultEmptyFunc) { return "}\n"; }
 // most of the thinning algorithms, PRED, SAUF, CTB and so on. When the end line
 // forest is not generated a different string should be used, for example
 // replacing the goto with a continue and changing the if condition accordingly.
+BEFORE_AFTER_FUNC(BeforeMainNoEndTree) {
+  return prefix + "tree_" + to_string(index) +
+         " => {\nif ({c+=1; c} >= w) { return None; }\n";
+}
+
+// This function defines and returns the string that should be put before each
+// (main) tree when generating the code for a forest of decision trees. The
+// string contains an if to check whether the end of a line is reached and a
+// goto to the corresponding tree in the end line forest. The string is specific
+// for algorithms which exploit a mask with a horizontal shift of one pixel like
+// most of the thinning algorithms, PRED, SAUF, CTB and so on. When the end line
+// forest is not generated a different string should be used, for example
+// replacing the goto with a continue and changing the if condition accordingly.
 BEFORE_AFTER_FUNC(BeforeMainShiftOne) {
   return prefix + "tree_" + to_string(index) +
-         " => { if ((c+=1) >= w - 1) { return Some(" + prefix + "break_0_" +
-         to_string(mapping[0][index]) + "); }\n}";
+         " => {\nif ({c+=1; c} >= w - 1) { return Some(" + prefix + "break_0_" +
+         to_string(mapping[0][index]) + "); }\n";
 }
 
 // This function defines and returns the string that should be put before each
@@ -45,7 +58,7 @@ BEFORE_AFTER_FUNC(BeforeMainShiftTwo) {
          " => {\nif ({c+=2; c}) >= w - 2 { if c > w - 2 { return Some(" +
          prefix + "break_0_" + to_string(mapping[0][index]) +
          "); } else { return Some(" + prefix + "break_1_" +
-         to_string(mapping[1][index]) + "); } } \n";
+         to_string(mapping[1][index]) + "); } }\n";
 }
 
 BEFORE_AFTER_FUNC(BeforeEnd) {
@@ -301,6 +314,7 @@ size_t GenerateDragCode(std::ostream &os, const BinaryDrag<conact> &bd,
                         const std::string prefix, size_t start_id,
                         const std::vector<std::vector<size_t>> mapping,
                         size_t end_group_id) {
+
   // This object wraps all the variables needed by the recursive function
   // GenerateCodeRec and allows to simplify its following call.
   GenerateCodeClass gcc(with_gotos, prefix, {{}}, conditions, actions);

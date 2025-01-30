@@ -57,9 +57,14 @@ bool GeneratePointersConditionsActionsCode(
 // bool GenerateActionsForCtbe(const std::string& filename, const rule_set& rs);
 
 std::map<std::string, std::string>
-GenerateConditions(const rule_set &rs, GenerateConditionActionCodeFlags flag);
-std::map<size_t, std::string>
-GenerateActions(const rule_set &rs, GenerateConditionActionCodeFlags flag,
-                GenerateActionCodeTypes type, std::optional<pixel_set> names);
+GenerateConditions(const rule_set &rs,
+                   GenerateConditionActionCodeFlags flag =
+                       GenerateConditionActionCodeFlags::CONDITIONS_WITH_IFS);
+std::map<size_t, std::string> GenerateActions(
+    const rule_set &rs,
+    GenerateConditionActionCodeFlags flag =
+        GenerateConditionActionCodeFlags::ACTIONS_WITH_CONTINUE,
+    GenerateActionCodeTypes type = GenerateActionCodeTypes::LABELING,
+    std::optional<pixel_set> names = std::nullopt);
 
 #endif // GRAPHGEN_CONACT_CODE_GENERATOR_H_

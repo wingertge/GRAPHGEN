@@ -131,15 +131,17 @@ void GeneratePointersCode(ofstream &os, const rule_set &rs) {
     string base_row_in_name = "img_row00";
     string base_row_out_name = "img_labels_row00";
     string base_row_in = type_in_prefix_string + base_row_in_name +
-                         " = img.index_axis(Axis(0), r as usize);";
+                         " = img.index_axis(Axis(0), r);";
     string base_row_out = type_out_prefix_string + base_row_out_name +
-                          " = img_labels.index_axis(Axis(0), r as usize);";
+                          " = img_labels.index_axis(Axis(0), r);";
+    ostringstream out_names, out_indexes;
+    out_names << "mut " << base_row_out_name;
+    out_indexes << "s![r, ..]";
 
     in_ss << "// Row pointers for the input image \n";
     in_ss << base_row_in + "\n";
 
     out_ss << "// Row pointers for the output image \n";
-    out_ss << base_row_out + "\n";
 
     for (int j = -shifts[1]; j < shifts[1];
          ++j) { // TODO: should use min and max y in mask
@@ -148,18 +150,25 @@ void GeneratePointersCode(ofstream &os, const rule_set &rs) {
         continue;
       }
 
-      string complete_string_in = type_in_prefix_string + "img_row" +
-                                  to_string(j < 0) + to_string(abs(j)) +
-                                  " = img.index_axis(Axis(0), (r + " +
-                                  to_string(j) + ") as usize);";
+      auto modifier = j < 0 ? to_string(j) : "+ " + to_string(j);
+
+      string complete_string_in =
+          type_in_prefix_string + "img_row" + to_string(j < 0) +
+          to_string(abs(j)) + " = img.index_axis(Axis(0), r " + modifier + ");";
       in_ss << complete_string_in + "\n";
+
+      out_names << ", " << "mut img_labels_row"
+                << to_string(j < 0) + to_string(abs(j));
+      out_indexes << ", s![r " << modifier << ", ..]";
 
       string complete_string_out = type_out_prefix_string + "img_labels_row" +
                                    to_string(j < 0) + to_string(abs(j)) +
-                                   " = img_labels.index_axis(Axis(0), (r + " +
-                                   to_string(j) + ") as usize);";
-      out_ss << complete_string_out + "\n";
+                                   " = img_labels.index_axis(Axis(0), (r " +
+                                   modifier + ") as usize);";
     }
+
+    out_ss << "let (" << out_names.str() << ") = img_labels.multi_slice_mut(("
+           << out_indexes.str() << "));";
     break;
   }
   case 3: {
