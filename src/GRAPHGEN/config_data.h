@@ -46,9 +46,9 @@ struct ConfigData {
   std::filesystem::path code_path_;
 
   // Tree / Forest / Dag (.inc)
-  std::string treecode_suffix_ = "_tree_code.rs.generated";
+  std::string treecode_suffix_ = "_tree_code.rs";
   std::filesystem::path treecode_path_;
-  std::string forestcode_suffix_ = "_forest_code.rs.generated";
+  std::string forestcode_suffix_ = "_forest_code.rs";
   std::filesystem::path forestcode_path_;
   std::string forestlabels_suffix_ = "_forest_labels.rs";
   std::filesystem::path forestlabels_path_;

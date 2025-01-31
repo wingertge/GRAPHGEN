@@ -157,6 +157,14 @@ public:
     std::ofstream os_label(labelpath);
     auto tab = string(4, ' ');
 
+    os_label << "/// Workaround for rust-analyzer bug that causes invalid "
+                "errors on the `include!`.";
+    os_label << "macro_rules! no_analyze {\n";
+    os_label << tab << "($tokens:tt) => {\n";
+    os_label << tab << tab << "$tokens\n";
+    os_label << tab << "}\n}\n\n";
+    os_label << "pub(crate) use no_analyze;\n\n";
+
     for (const auto &i : f_) {
       std::filesystem::path filepath =
           conf.GetForestCodePath(names[i.first] + "_line");
@@ -169,7 +177,7 @@ public:
       auto current_id = last_id;
       auto name = names[i.first];
       auto labels = name + "Labels";
-      os << "{\n";
+      os << "no_analyze!{{\n";
       os << "use " << name << "Labels::*;";
       os << "let mut label = entry;\n";
       os << "while let Some(next) = (|label| -> Option<" << labels
@@ -189,7 +197,7 @@ public:
       }
       os << tab << "}; None})(label)\n{\n";
       os << "label = next;\n}\n";
-      os << "}\n";
+      os << "}}\n";
 
       os_label << "#[allow(non_snake_case, non_camel_case_types, unused)]\n";
       os_label << "pub enum " << labels << " {\n";
