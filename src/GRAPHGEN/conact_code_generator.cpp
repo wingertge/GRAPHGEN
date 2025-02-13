@@ -32,7 +32,7 @@ string GenerateAccessPixelCode(const string &img_name, const pixel &p) {
     col += " - " + to_string(abs(p.coords_[0]));
   }
 
-  return img_name + slice_id + row_id + "[(c" + col + ") as usize]";
+  return "*" + img_name + slice_id + row_id + ".add((c" + col + ") as usize)";
 }
 
 string CreateAssignmentCodeRec(const std::vector<std::string> &pixels_names,
@@ -57,7 +57,7 @@ string CreateAssignmentCodeRec(const std::vector<std::string> &pixels_names,
 
 string CreateAssignmentCode(const string &action, const pixel_set &names) {
   if (action == "nothing") {
-    return "0";
+    return "0.elem()";
   }
 
   string action_ = action.substr(3);
@@ -131,17 +131,15 @@ void GeneratePointersCode(ofstream &os, const rule_set &rs) {
     string base_row_in_name = "img_row00";
     string base_row_out_name = "img_labels_row00";
     string base_row_in = type_in_prefix_string + base_row_in_name +
-                         " = img.index_axis(Axis(0), r);";
+                         " = img.add(r * w as usize);";
     string base_row_out = type_out_prefix_string + base_row_out_name +
-                          " = img_labels.index_axis(Axis(0), r);";
-    ostringstream out_names, out_indexes;
-    out_names << "mut " << base_row_out_name;
-    out_indexes << "s![r, ..]";
+                          " = img_labels.add(r * w as usize);";
 
     in_ss << "// Row pointers for the input image \n";
-    in_ss << base_row_in + "\n";
+    in_ss << base_row_in << "\n";
 
     out_ss << "// Row pointers for the output image \n";
+    out_ss << base_row_out << "\n";
 
     for (int j = -shifts[1]; j < shifts[1];
          ++j) { // TODO: should use min and max y in mask
@@ -154,21 +152,16 @@ void GeneratePointersCode(ofstream &os, const rule_set &rs) {
 
       string complete_string_in =
           type_in_prefix_string + "img_row" + to_string(j < 0) +
-          to_string(abs(j)) + " = img.index_axis(Axis(0), r " + modifier + ");";
+          to_string(abs(j)) + " = img.add((r " + modifier + ") * w as usize);";
       in_ss << complete_string_in + "\n";
-
-      out_names << ", " << "mut img_labels_row"
-                << to_string(j < 0) + to_string(abs(j));
-      out_indexes << ", s![r " << modifier << ", ..]";
 
       string complete_string_out = type_out_prefix_string + "img_labels_row" +
                                    to_string(j < 0) + to_string(abs(j)) +
-                                   " = img_labels.index_axis(Axis(0), (r " +
-                                   modifier + ") as usize);";
+                                   " = img_labels.add((r " + modifier +
+                                   ") * w as usize);";
+      out_ss << complete_string_out + "\n";
     }
 
-    out_ss << "let (" << out_names.str() << ") = img_labels.multi_slice_mut(("
-           << out_indexes.str() << "));";
     break;
   }
   case 3: {
@@ -263,7 +256,8 @@ std::map<string, string> GenerateConditionsCode(const rule_set &rs,
       }
     }
 
-    condition_code << GenerateAccessPixelCode("img_", p) << " > 0";
+    condition_code << "(" << GenerateAccessPixelCode("img_", p)
+                   << ").to_u8() > 0";
 
     result[p.name_] = condition_code.str();
   }
@@ -285,9 +279,9 @@ std::map<size_t, string> GenerateActionsCode(const rule_set &rs,
 
     string cur_action = rs.actions[a];
 
-    string where_to_write = "img_labels_" +
+    string where_to_write = "*img_labels_" +
                             string(n_dims > 2 ? "slice00_" : "") +
-                            "row00[c as usize] = ";
+                            "row00.add(c as usize) = ";
 
     action << where_to_write << CreateAssignmentCode(cur_action, names) << ";";
 

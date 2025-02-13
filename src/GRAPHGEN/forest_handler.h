@@ -158,7 +158,7 @@ public:
     auto tab = string(4, ' ');
 
     os_label << "/// Workaround for rust-analyzer bug that causes invalid "
-                "errors on the `include!`.";
+                "errors on the `include!`.\n";
     os_label << "macro_rules! no_analyze {\n";
     os_label << tab << "($tokens:tt) => {\n";
     os_label << tab << tab << "$tokens\n";
